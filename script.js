@@ -1,86 +1,86 @@
-// Splash Screen Logic
-window.addEventListener("load", () => {
-    setTimeout(() => {
+document.addEventListener("DOMContentLoaded", function () {
+    const taskForm = document.getElementById("taskForm");
+    const taskTableBody = document.getElementById("taskTable").getElementsByTagName("tbody")[0];
+  
+    // Load the splash screen and hide it after a few seconds
+    setTimeout(function () {
       document.getElementById("splash-screen").style.display = "none";
       document.getElementById("app").style.display = "block";
     }, 3000); // Show splash screen for 3 seconds
-  });
   
-  // Task Management Logic
-  const taskForm = document.getElementById("taskForm");
-  const taskList = document.getElementById("taskList");
+    // Load tasks from localStorage and display them in the table
+    function loadTasks() {
+      const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+      taskTableBody.innerHTML = ''; // Clear current table rows
   
-  taskForm.addEventListener("submit", (e) => {
-    e.preventDefault(); // Prevent form submission and reload
-    const taskName = document.getElementById("taskName").value;
-    const taskTime = document.getElementById("taskTime").value;
-    const taskDuration = parseInt(document.getElementById("taskDuration").value); // Days duration
+      tasks.forEach((task, index) => {
+        const row = taskTableBody.insertRow();
   
-    if (!taskName || !taskTime || isNaN(taskDuration)) {
-      alert("Please fill out all fields correctly.");
-      return;
-    }
-  
-    // Create task list item
-    const task = document.createElement("li");
-    task.innerHTML = `
-      <input type="checkbox" class="taskCheckbox" />
-      <span>${taskName} - Time: ${taskTime} - Duration: ${taskDuration} day(s)</span>
-    `;
-    taskList.appendChild(task);
-  
-    // Set notification at the specific time
-    const now = new Date();
-    const [hours, minutes] = taskTime.split(":").map(Number);
-  
-    const notificationStartTime = new Date();
-    notificationStartTime.setHours(hours, minutes, 0);
-  
-    for (let i = 0; i < taskDuration; i++) {
-      const notificationTime = new Date(notificationStartTime);
-      notificationTime.setDate(now.getDate() + i);
-  
-      const timeUntilNotification = notificationTime.getTime() - now.getTime();
-      if (timeUntilNotification > 0) {
-        setTimeout(() => {
-          notifyUser(`Task Reminder: ${taskName}`, `It's time to start ${taskName}!`, task);
-        }, timeUntilNotification);
-      }
-    }
-  
-    // Clear the form
-    taskForm.reset();
-  });
-  
-  // Notification Function
-  function notifyUser(title, body, task) {
-    if (Notification.permission === "granted") {
-      const notification = new Notification(title, { body });
-      notification.onclick = () => {
-        task.querySelector(".taskCheckbox").checked = true; // Automatically tick the checkbox
-        notification.close();
-      };
-    } else if (Notification.permission !== "denied") {
-      Notification.requestPermission().then((permission) => {
-        if (permission === "granted") {
-          const notification = new Notification(title, { body });
-          notification.onclick = () => {
-            task.querySelector(".taskCheckbox").checked = true; // Automatically tick the checkbox
-            notification.close();
-          };
-        }
+        row.innerHTML = `
+          <td>${task.name}</td>
+          <td>${task.time}</td>
+          <td>${task.duration}</td>
+          <td>${task.createdAt}</td>
+          <td><input type="checkbox" ${task.completed ? 'checked' : ''} onclick="toggleCompletion(${index})"></td>
+        `;
       });
-    } else {
-      alert(`${title}\n${body}`);
     }
-  }
   
-  // Service Worker Registration for PWA
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("service-worker.js").then(() => {
-      console.log("Service Worker Registered");
-    }).catch((error) => {
-      console.error("Service Worker Registration Failed:", error);
+    // Save tasks to localStorage
+    function saveTasks(tasks) {
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+    }
+  
+    // Handle task form submission
+    taskForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+  
+      const taskName = document.getElementById("taskName").value;
+      const taskTime = document.getElementById("taskTime").value;
+      const taskDuration = document.getElementById("taskDuration").value;
+  
+      if (!taskName || !taskTime || !taskDuration) {
+        alert("Please fill in all fields");
+        return;
+      }
+  
+      // Get current date and time for task creation
+      const createdAt = new Date().toLocaleString();
+  
+      // Create task object
+      const newTask = {
+        name: taskName,
+        time: taskTime,
+        duration: taskDuration,
+        createdAt: createdAt,
+        completed: false,
+      };
+  
+      // Get existing tasks from localStorage
+      const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+  
+      // Add new task to the array
+      tasks.push(newTask);
+  
+      // Save updated task list to localStorage
+      saveTasks(tasks);
+  
+      // Reset form fields
+      taskForm.reset();
+  
+      // Reload the tasks to show the new one in the table
+      loadTasks();
     });
-  }
+  
+    // Toggle task completion status
+    window.toggleCompletion = function (index) {
+      const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+      tasks[index].completed = !tasks[index].completed;
+      saveTasks(tasks);
+      loadTasks(); // Reload the table to reflect the changes
+    };
+  
+    // Initial load of tasks
+    loadTasks();
+  });
   
