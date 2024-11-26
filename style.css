@@ -106,3 +106,27 @@ button:hover {
     margin-bottom: 10px;
     color: #333;
 }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+table, th, td {
+    border: 1px solid #ddd;
+}
+
+th, td {
+    padding: 10px;
+    text-align: left;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+td input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+}
